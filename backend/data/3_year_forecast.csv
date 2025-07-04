@@ -1,0 +1,10 @@
+Item,Year 1,Year 2,Year 3
+Revenue,350000,378000,408240
+Cost of Goods Sold,140000,151200,163296
+Gross Profit,210000,226800,244944
+Operating Expenses,20600,21630,22711.5
+Operating Profit,189400,205170,222232.5
+Interest Expense,5000,5000,5000
+Net Profit Before Tax,184400,200170,217232.5
+Income Tax (20%),36880,40034,43446.5
+Net Profit After Tax,147520,160136,173786
