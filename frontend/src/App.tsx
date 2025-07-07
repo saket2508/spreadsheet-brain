@@ -1,55 +1,32 @@
 import { useState } from "react";
-interface QueryResult {
-  row_index: number;
-  row_text: string;
-  score: number;
-  business_categories: string[];
-  explanation: string;
-  column_types: Record<string, string>;
-  relevance_reason: string;
-}
-
-interface QueryResponse {
-  results: QueryResult[];
-  query_analysis: {
-    original_query: string;
-    query_type: string;
-    confidence: number;
-    extracted_concepts: string[];
-    search_strategy: string;
-  };
-  total_results_found: number;
-}
-
-interface UploadResponse {
-  filename: string;
-  num_rows: number;
-  columns: string[];
-  preview: Record<string, string | number>[];
-}
+import { useUploadCsv, useQuerySpreadsheet } from "./hooks/useSpreadsheetApi";
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string>("");
-  const [uploadedData, setUploadedData] = useState<UploadResponse | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const [query, setQuery] = useState("");
-  const [isQuerying, setIsQuerying] = useState(false);
-  const [queryResults, setQueryResults] = useState<QueryResponse | null>(null);
-  const [queryError, setQueryError] = useState<string>("");
 
-  // File handling functions
+  const uploadMutation = useUploadCsv();
+  const queryMutation = useQuerySpreadsheet();
+
   const handleFileSelect = (selectedFile: File | null) => {
-    if (selectedFile && selectedFile.type === 'text/csv') {
+    if (selectedFile && selectedFile.type === "text/csv") {
       setFile(selectedFile);
-      setUploadStatus('');
-      setUploadedData(null);
-      setQueryResults(null);
-    } else if (selectedFile) {
-      setUploadStatus('❌ Please select a CSV file only');
+      uploadMutation.reset();
+      queryMutation.reset();
     }
+  };
+
+  const handleUpload = () => {
+    if (file) {
+      uploadMutation.mutate(file);
+    }
+  };
+
+  const handleSearch = () => {
+    if (!query.trim() || !uploadMutation.data) return;
+    queryMutation.mutate({ question: query, k: 5 });
   };
 
   // Drag and drop handlers
@@ -66,7 +43,7 @@ function App() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const droppedFiles = e.dataTransfer.files;
     if (droppedFiles.length > 0) {
       handleFileSelect(droppedFiles[0]);
@@ -125,11 +102,11 @@ function App() {
             </h3>
           </div>
 
-          <div 
+          <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              isDragOver 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-slate-300 hover:border-blue-400'
+              isDragOver
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-300 hover:border-blue-400"
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -144,9 +121,7 @@ function App() {
             />
             <label htmlFor="file-input" className="cursor-pointer block">
               <div className="space-y-2">
-                <div className="text-4xl">
-                  {isDragOver ? '⬇️' : '📄'}
-                </div>
+                <div className="text-4xl">{isDragOver ? "⬇️" : "📄"}</div>
                 <div className="text-slate-600">
                   {file ? (
                     <span className="font-medium text-slate-900">
@@ -162,7 +137,7 @@ function App() {
                   )}
                 </div>
                 <div className="text-sm text-slate-500">
-                  {isDragOver ? 'Drop your CSV file here' : 'CSV files only'}
+                  {isDragOver ? "Drop your CSV file here" : "CSV files only"}
                 </div>
               </div>
             </label>
@@ -171,52 +146,11 @@ function App() {
           {file && (
             <div className="mt-4">
               <button
-                onClick={async () => {
-                  if (!file) return;
-
-                  setIsUploading(true);
-                  setUploadStatus("");
-
-                  const formData = new FormData();
-                  formData.append("file", file);
-
-                  try {
-                    const response = await fetch(
-                      "http://localhost:8000/upload",
-                      {
-                        method: "POST",
-                        body: formData,
-                      }
-                    );
-
-                    if (response.ok) {
-                      const data: UploadResponse = await response.json();
-                      setUploadedData(data);
-                      setUploadStatus(
-                        `✅ Successfully uploaded ${data.filename} (${data.num_rows} rows, ${data.columns.length} columns)`
-                      );
-                    } else {
-                      const errorData = await response.json();
-                      setUploadStatus(
-                        `❌ Upload failed: ${
-                          errorData.detail || "Unknown error"
-                        }`
-                      );
-                    }
-                  } catch (error) {
-                    setUploadStatus(
-                      `❌ Upload failed: ${
-                        error instanceof Error ? error.message : "Network error"
-                      }`
-                    );
-                  } finally {
-                    setIsUploading(false);
-                  }
-                }}
-                disabled={isUploading}
+                onClick={handleUpload}
+                disabled={uploadMutation.isPending}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isUploading ? (
+                {uploadMutation.isPending ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Processing...</span>
@@ -228,21 +162,23 @@ function App() {
             </div>
           )}
 
-          {uploadStatus && (
-            <div
-              className={`mt-4 p-3 rounded-lg text-sm ${
-                uploadStatus.includes("❌")
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-green-50 text-green-700 border border-green-200"
-              }`}
-            >
-              {uploadStatus}
+          {uploadMutation.isError && (
+            <div className="mt-4 p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+              ❌ Upload failed: {uploadMutation.error?.message}
+            </div>
+          )}
+
+          {uploadMutation.isSuccess && uploadMutation.data && (
+            <div className="mt-4 p-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
+              ✅ Successfully uploaded {uploadMutation.data.filename} (
+              {uploadMutation.data.num_rows} rows,{" "}
+              {uploadMutation.data.columns.length} columns)
             </div>
           )}
         </section>
 
         {/* Data Preview */}
-        {uploadedData && (
+        {uploadMutation.data && (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center space-x-2 mb-4">
               <span className="text-green-500">📊</span>
@@ -255,13 +191,13 @@ function App() {
               <div className="bg-slate-50 p-3 rounded-lg">
                 <div className="text-sm text-slate-600">Columns</div>
                 <div className="font-medium text-slate-900">
-                  {uploadedData.columns.join(", ")}
+                  {uploadMutation.data.columns.join(", ")}
                 </div>
               </div>
               <div className="bg-slate-50 p-3 rounded-lg">
                 <div className="text-sm text-slate-600">Total Rows</div>
                 <div className="font-medium text-slate-900">
-                  {uploadedData.num_rows}
+                  {uploadMutation.data.num_rows}
                 </div>
               </div>
             </div>
@@ -270,7 +206,7 @@ function App() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200">
-                    {uploadedData.columns.map((col) => (
+                    {uploadMutation.data.columns.map((col: string) => (
                       <th
                         key={col}
                         className="text-left py-2 px-3 font-medium text-slate-900 bg-slate-50"
@@ -281,15 +217,19 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {uploadedData.preview.slice(0, 3).map((row, idx) => (
-                    <tr key={idx} className="border-b border-slate-100">
-                      {uploadedData.columns.map((col) => (
-                        <td key={col} className="py-2 px-3 text-slate-700">
-                          {row[col]}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {uploadMutation.data.preview
+                    .slice(0, 3)
+                    .map(
+                      (row: Record<string, string | number>, idx: number) => (
+                        <tr key={idx} className="border-b border-slate-100">
+                          {uploadMutation.data!.columns.map((col: string) => (
+                            <td key={col} className="py-2 px-3 text-slate-700">
+                              {row[col]}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    )}
                 </tbody>
               </table>
             </div>
@@ -297,7 +237,7 @@ function App() {
         )}
 
         {/* Search Section */}
-        {uploadedData && (
+        {uploadMutation.data && (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center space-x-2 mb-6">
               <span className="text-purple-500">🔍</span>
@@ -334,30 +274,30 @@ function App() {
                 className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 onKeyDown={(e) =>
                   e.key === "Enter" &&
-                  !isQuerying &&
+                  !queryMutation.isPending &&
                   query.trim() &&
                   handleSearch()
                 }
               />
               <button
                 onClick={handleSearch}
-                disabled={!query.trim() || isQuerying}
+                disabled={!query.trim() || queryMutation.isPending}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isQuerying ? "Searching..." : "Search"}
+                {queryMutation.isPending ? "Searching..." : "Search"}
               </button>
             </div>
 
-            {queryError && (
+            {queryMutation.isError && (
               <div className="mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
-                ❌ {queryError}
+                ❌ Query failed: {queryMutation.error?.message}
               </div>
             )}
           </section>
         )}
 
         {/* Results Section */}
-        {queryResults && (
+        {queryMutation.data && (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center space-x-2 mb-6">
               <span className="text-green-500">📈</span>
@@ -375,19 +315,22 @@ function App() {
                 <div>
                   <span className="text-blue-600 font-medium">Type:</span>
                   <div className="text-blue-900">
-                    {queryResults.query_analysis.query_type}
+                    {queryMutation.data.query_analysis.query_type}
                   </div>
                 </div>
                 <div>
                   <span className="text-blue-600 font-medium">Confidence:</span>
                   <div className="text-blue-900">
-                    {(queryResults.query_analysis.confidence * 100).toFixed(1)}%
+                    {(
+                      queryMutation.data.query_analysis.confidence * 100
+                    ).toFixed(1)}
+                    %
                   </div>
                 </div>
                 <div>
                   <span className="text-blue-600 font-medium">Concepts:</span>
                   <div className="text-blue-900">
-                    {queryResults.query_analysis.extracted_concepts.join(
+                    {queryMutation.data.query_analysis.extracted_concepts.join(
                       ", "
                     ) || "None"}
                   </div>
@@ -395,7 +338,7 @@ function App() {
                 <div>
                   <span className="text-blue-600 font-medium">Strategy:</span>
                   <div className="text-blue-900">
-                    {queryResults.query_analysis.search_strategy}
+                    {queryMutation.data.query_analysis.search_strategy}
                   </div>
                 </div>
               </div>
@@ -404,10 +347,11 @@ function App() {
             {/* Results */}
             <div>
               <h4 className="font-medium text-slate-900 mb-4">
-                🎯 Found {queryResults.total_results_found} relevant results
+                🎯 Found {queryMutation.data.total_results_found} relevant
+                results
               </h4>
               <div className="space-y-4">
-                {queryResults.results.map((result, idx) => (
+                {queryMutation.data.results.map((result, idx) => (
                   <div
                     key={idx}
                     className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -482,43 +426,6 @@ function App() {
       </main>
     </div>
   );
-
-  // Helper function for search
-  async function handleSearch() {
-    if (!query.trim() || !uploadedData) return;
-
-    setIsQuerying(true);
-    setQueryError("");
-
-    try {
-      const response = await fetch("http://localhost:8000/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: query,
-          k: 5,
-        }),
-      });
-
-      if (response.ok) {
-        const data: QueryResponse = await response.json();
-        setQueryResults(data);
-      } else {
-        const errorData = await response.json();
-        setQueryError(`Query failed: ${errorData.detail || "Unknown error"}`);
-      }
-    } catch (error) {
-      setQueryError(
-        `Query failed: ${
-          error instanceof Error ? error.message : "Network error"
-        }`
-      );
-    } finally {
-      setIsQuerying(false);
-    }
-  }
 }
 
 export default App;
