@@ -7,21 +7,21 @@ from tagging import classify_metric, explain_classification, get_business_concep
 def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
     """Detect column types for better business context understanding."""
     column_types = {}
-    print(f"the columns in this dataframe are {df.columns.tolist()}")
 
     for col in df.columns:
         col_lower = col.lower()
         sample_values = df[col].dropna().astype(str)
-        print(f"the sample values for {col} are {sample_values.tolist()}")
 
         # First check data type - if it's string/object, it's likely categorical unless proven otherwise
         if df[col].dtype in ['object', 'string']:
             # For string columns, only classify as special types if there are strong indicators
-            percentage_values = sample_values.str.contains('%').sum() if len(sample_values) > 0 else 0
-            mostly_percentages = percentage_values > len(sample_values) * 0.5  # More than 50% contain %
-            
-            if ('percent' in col_lower or 'margin' in col_lower or 'growth' in col_lower or 
-                'rate' in col_lower or col_lower.endswith('%')) and mostly_percentages:
+            percentage_values = sample_values.str.contains(
+                '%').sum() if len(sample_values) > 0 else 0
+            mostly_percentages = percentage_values > len(
+                sample_values) * 0.5  # More than 50% contain %
+
+            if ('percent' in col_lower or 'margin' in col_lower or 'growth' in col_lower or
+                    'rate' in col_lower or col_lower.endswith('%')) and mostly_percentages:
                 column_types[col] = 'percentage'
             elif 'date' in col_lower or 'year' in col_lower or 'month' in col_lower or 'quarter' in col_lower:
                 column_types[col] = 'date'
@@ -29,7 +29,7 @@ def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
                 column_types[col] = 'formula'
             else:
                 column_types[col] = 'categorical'
-        
+
         # For numeric columns, apply business logic
         elif df[col].dtype in ['float64', 'int64']:
             # Check for percentage columns (numeric values between 0-1 or 0-100)
@@ -50,7 +50,6 @@ def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
         else:
             column_types[col] = 'text'
 
-    print(f"Column types detected: {column_types}")
     return column_types
 
 
@@ -145,7 +144,6 @@ def dataframe_to_documents(df: pd.DataFrame) -> List[Dict]:
 
     # Detect column types
     column_types = detect_column_types(df)
-    print(f"Column types detected: {column_types}")
 
     docs = []
     for i, row in df.iterrows():

@@ -133,3 +133,59 @@ MIT
 **Saket S Narayan**  
 Frontend/Full-Stack Developer  
 https://github.com/saket2508
+
+---
+
+## 🐳 Docker Deployment
+
+### Prerequisites
+- Docker and Docker Compose installed
+- OpenAI API key
+
+### Setup Instructions
+
+1. **Configure environment variables**:
+   ```bash
+   cd backend
+   echo "OPENAI_API_KEY=sk-your-actual-openai-api-key-here" > .env
+   cd ..
+   ```
+
+2. **Build and run containers**:
+   ```bash
+   # Build Docker images
+   docker-compose build
+
+   # Start services in detached mode
+   docker-compose up -d
+
+   # Check service status
+   docker-compose ps
+   ```
+
+3. **Access the containerized application**:
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+
+4. **Management commands**:
+   ```bash
+   # View logs
+   docker-compose logs -f
+
+   # View specific service logs
+   docker-compose logs -f backend
+   docker-compose logs -f frontend
+
+   # Stop services
+   docker-compose down
+
+   # Stop and remove volumes
+   docker-compose down -v
+   ```
+
+### Docker Architecture
+- **Backend**: FastAPI container with ChromaDB persistence
+- **Frontend**: Multi-stage build (Node.js → Nginx) with API proxy
+- **Networking**: Internal Docker network for service communication
+- **Volumes**: ChromaDB data persists across container restarts
