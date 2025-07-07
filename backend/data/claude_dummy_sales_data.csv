@@ -1,0 +1,31 @@
+Date,Product,Category,Region,Sales_Rep,Units_Sold,Unit_Price,Total_Revenue,Cost_of_Goods,Profit,Customer_Type
+2024-01-15,Laptop Pro X1,Electronics,North America,Sarah Johnson,25,1299.99,32499.75,24999.75,7500.00,Corporate
+2024-01-18,Wireless Headphones,Electronics,Europe,Mike Chen,45,199.99,8999.55,6749.55,2250.00,Retail
+2024-01-22,Office Chair Deluxe,Furniture,Asia Pacific,Lisa Wong,12,449.99,5399.88,3599.88,1800.00,Corporate
+2024-01-25,Smartphone Ultra,Electronics,North America,David Rodriguez,38,899.99,34199.62,25199.62,9000.00,Retail
+2024-01-28,Standing Desk,Furniture,Europe,Emma Thompson,8,699.99,5599.92,3919.92,1680.00,Corporate
+2024-02-02,Tablet Air,Electronics,Asia Pacific,James Lee,22,599.99,13199.78,9679.78,3520.00,Retail
+2024-02-05,Gaming Mouse,Electronics,North America,Sarah Johnson,67,79.99,5359.33,4019.33,1340.00,Retail
+2024-02-08,Conference Table,Furniture,Europe,Mike Chen,3,1899.99,5699.97,3799.97,1900.00,Corporate
+2024-02-12,Bluetooth Speaker,Electronics,Asia Pacific,Lisa Wong,34,149.99,5099.66,3739.66,1360.00,Retail
+2024-02-15,Ergonomic Keyboard,Electronics,North America,David Rodriguez,29,129.99,3769.71,2609.71,1160.00,Corporate
+2024-02-18,Bookshelf Unit,Furniture,Europe,Emma Thompson,15,299.99,4499.85,2999.85,1500.00,Retail
+2024-02-22,Monitor 4K,Electronics,Asia Pacific,James Lee,19,549.99,10449.81,7599.81,2850.00,Corporate
+2024-02-25,Desk Lamp LED,Furniture,North America,Sarah Johnson,41,89.99,3689.59,2459.59,1230.00,Retail
+2024-02-28,Wireless Charger,Electronics,Europe,Mike Chen,55,49.99,2749.45,1924.45,825.00,Retail
+2024-03-03,Executive Chair,Furniture,Asia Pacific,Lisa Wong,7,899.99,6299.93,4199.93,2100.00,Corporate
+2024-03-06,Smartwatch Pro,Electronics,North America,David Rodriguez,31,399.99,12399.69,8679.69,3720.00,Retail
+2024-03-10,File Cabinet,Furniture,Europe,Emma Thompson,14,199.99,2799.86,1679.86,1120.00,Corporate
+2024-03-13,Webcam HD,Electronics,Asia Pacific,James Lee,48,119.99,5759.52,4319.52,1440.00,Retail
+2024-03-17,Lounge Chair,Furniture,North America,Sarah Johnson,9,649.99,5849.91,3899.91,1950.00,Corporate
+2024-03-20,Power Bank,Electronics,Europe,Mike Chen,63,39.99,2519.37,1639.37,880.00,Retail
+2024-03-24,Printer All-in-One,Electronics,Asia Pacific,Lisa Wong,16,299.99,4799.84,3359.84,1440.00,Corporate
+2024-03-27,Coffee Table,Furniture,North America,David Rodriguez,11,399.99,4399.89,2639.89,1760.00,Retail
+2024-03-30,USB Hub,Electronics,Europe,Emma Thompson,72,29.99,2159.28,1295.28,864.00,Retail
+2024-04-02,Projector Mini,Electronics,Asia Pacific,James Lee,13,699.99,9099.87,6369.87,2730.00,Corporate
+2024-04-05,Storage Ottoman,Furniture,North America,Sarah Johnson,18,149.99,2699.82,1619.82,1080.00,Retail
+2024-04-09,Docking Station,Electronics,Europe,Mike Chen,26,199.99,5199.74,3639.74,1560.00,Corporate
+2024-04-12,Nightstand,Furniture,Asia Pacific,Lisa Wong,21,179.99,3779.79,2267.79,1512.00,Retail
+2024-04-15,Fitness Tracker,Electronics,North America,David Rodriguez,44,179.99,7919.56,5279.56,2640.00,Retail
+2024-04-18,Dining Chair Set,Furniture,Europe,Emma Thompson,6,599.99,3599.94,2159.94,1440.00,Corporate
+2024-04-22,Drone Camera,Electronics,Asia Pacific,James Lee,8,899.99,7199.92,5039.92,2160.00,Retail
