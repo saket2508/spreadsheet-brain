@@ -1,5 +1,7 @@
 # 🧠 Spreadsheet Brain – Semantic Search for Spreadsheets
 
+> **🌐 [Live Demo](https://superjoin-hiring-frontend-saket.vercel.app)** - Try the application now!
+
 This project is a complete full-stack application built as part of a hiring assignment for Superjoin. It allows users to upload CSV files and query them using natural language through an intuitive web interface. The system performs semantic search to return the most relevant rows based on meaning, not just exact matches.
 
 ---
@@ -109,18 +111,21 @@ npm install
 #### Option A: Running Locally
 
 **Backend** (Terminal 1):
+
 ```bash
 cd backend
 uvicorn main:app --reload
 ```
 
 **Frontend** (Terminal 2):
+
 ```bash
 cd frontend
 npm run dev
 ```
 
 **Access the application**:
+
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
@@ -130,6 +135,7 @@ npm run dev
 **Prerequisites**: Docker and Docker Compose installed
 
 1. **Configure environment variables**:
+
    ```bash
    cd backend
    echo "OPENAI_API_KEY=sk-your-actual-openai-api-key-here" > .env
@@ -137,6 +143,7 @@ npm run dev
    ```
 
 2. **Build and run containers**:
+
    ```bash
    # Build Docker images
    docker-compose build
@@ -149,11 +156,13 @@ npm run dev
    ```
 
 3. **Access the containerized application**:
+
    - **Frontend**: http://localhost:3000
    - **Backend API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
 
 4. **Management commands**:
+
    ```bash
    # View logs
    docker-compose logs -f
@@ -170,6 +179,7 @@ npm run dev
    ```
 
 **Docker Architecture**:
+
 - **Backend**: FastAPI container with ChromaDB persistence
 - **Frontend**: Multi-stage build (Node.js → Nginx) with API proxy
 - **Networking**: Internal Docker network for service communication
@@ -327,6 +337,27 @@ npm run preview
 ## 📜 License
 
 MIT
+
+---
+
+## 🚀 Production Deployment
+
+### Deployment Architecture
+
+- **Backend**: Railway (with volume persistence)
+- **Frontend**: Vercel (with global CDN)
+- **Database**: ChromaDB on Railway volume
+- **Security**: Rate limiting, input validation, CORS protection
+
+---
+
+## 🔒 Security Features
+
+✅ **Rate Limiting**: Upload (8/hour), Query (30/min)  
+✅ **Input Validation**: Query sanitization, file validation  
+✅ **CORS Protection**: Specific domain allowlist  
+✅ **File Security**: MIME type validation, size limits  
+✅ **Code Injection Protection**: JSON parsing, pattern detection
 
 ---
 
