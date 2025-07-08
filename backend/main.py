@@ -33,9 +33,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",      # Local development (Vite)
         "http://localhost:3000",      # Local development (alternative)
-        # "https://*.vercel.app",       # Vercel preview deployments
-        # Add your production Vercel domain here when deployed
-        # "https://your-app-name.vercel.app"
+        "https://superjoin-hiring-frontend-saket.vercel.app",  # Production Vercel URL
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
@@ -49,7 +47,7 @@ async def upload_csv(request: Request, file: UploadFile = File(...)):
     try:
         # File validation
         await validate_csv_file(file)
-        
+
         contents = await file.read()
         print(f"Uploading file: {file.filename}")
 
@@ -81,7 +79,7 @@ async def query_spreadsheet(request: Request, query: QueryRequest):
     try:
         # Sanitize query input for security
         sanitized_question = sanitize_query_input(query.question)
-        
+
         vectordb = load_vectorstore()  # reload persisted Chroma index
 
         # Process query using intelligent query understanding
