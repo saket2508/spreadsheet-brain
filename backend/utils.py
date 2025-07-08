@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import json
 from typing import Dict, List, Any
 from tagging import classify_metric, explain_classification, get_business_concept_hierarchy
 
@@ -169,15 +170,15 @@ def dataframe_to_documents(df: pd.DataFrame) -> List[Dict]:
         # Classify the row using enhanced tagging system
         row_categories = classify_metric(row_text, formula_info, column_types)
 
-        # Enhanced metadata - flatten complex structures for ChromaDB compatibility
+        # Enhanced metadata - use JSON for safe parsing
         metadata = {
             "row_index": i,
-            "column_types_json": str({col: column_types[col] for col in df.columns}),
-            "formula_info_json": str(formula_info) if formula_info else "",
-            "categories_json": str(row_categories),
-            "business_concepts_json": str(list(set(row_categories))),
+            "column_types_json": json.dumps({col: column_types[col] for col in df.columns}),
+            "formula_info_json": json.dumps(formula_info) if formula_info else "{}",
+            "categories_json": json.dumps(row_categories),
+            "business_concepts_json": json.dumps(list(set(row_categories))),
             "classification_explanation": explain_classification(row_categories, row_text),
-            "business_hierarchy_json": str(get_business_concept_hierarchy())
+            "business_hierarchy_json": json.dumps(get_business_concept_hierarchy())
         }
 
         docs.append(Document(page_content=row_text, metadata=metadata))

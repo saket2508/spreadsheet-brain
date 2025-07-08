@@ -1,0 +1,13 @@
+Deal Name,Stage,Owner,Value,Close Date,Probability %
+Acme Expansion,Prospecting,Alice Smith,25000,2024-07-10,20
+Beta Renewal,Qualified,Bob Lee,12000,2024-07-15,40
+Gamma Upgrade,Proposal,Carlos Diaz,18000,2024-07-20,60
+Delta New,Negotiation,Dana Kim,30000,2024-07-25,80
+Epsilon Cross-sell,Closed Won,Evan Chen,22000,2024-06-30,100
+Zeta Pilot,Prospecting,Fiona Patel,15000,2024-07-12,20
+Eta Expansion,Qualified,George Brown,17000,2024-07-18,40
+Theta Renewal,Proposal,Hannah White,16000,2024-07-22,60
+Iota New,Negotiation,Ivan Black,21000,2024-07-28,80
+Kappa Upgrade,Closed Lost,Julia Green,14000,2024-06-29,0
+Lambda Cross-sell,Prospecting,Kevin Blue,13000,2024-07-14,20
+Mu Pilot,Qualified,Lily Red,15500,2024-07-16,40

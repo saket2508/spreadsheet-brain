@@ -1,0 +1,17 @@
+Customer Name,Segment,Region,Revenue,Churned,Last Purchase
+Acme Corp,Enterprise,North,45000,FALSE,2024-05-10
+Beta LLC,SMB,South,12000,FALSE,2024-06-01
+Gamma Inc,Enterprise,East,38000,TRUE,2024-03-15
+Delta Ltd,SMB,West,9000,FALSE,2024-06-05
+Epsilon Co,Enterprise,North,52000,FALSE,2024-05-28
+Zeta Group,SMB,South,15000,TRUE,2024-04-20
+Eta Solutions,Enterprise,East,41000,FALSE,2024-05-30
+Theta Partners,SMB,West,11000,FALSE,2024-06-03
+Iota Holdings,Enterprise,North,47000,FALSE,2024-05-25
+Kappa Ventures,SMB,South,13000,FALSE,2024-06-02
+Lambda Tech,Enterprise,East,39000,FALSE,2024-05-29
+Mu Dynamics,SMB,West,10000,TRUE,2024-04-18
+Nu Systems,Enterprise,North,43000,FALSE,2024-05-27
+Xi Innovations,SMB,South,14000,FALSE,2024-06-04
+Omicron Labs,Enterprise,East,40000,FALSE,2024-05-31
+Pi Networks,SMB,West,9500,FALSE,2024-06-06

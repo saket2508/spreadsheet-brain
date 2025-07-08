@@ -5,6 +5,7 @@ from models import QueryRequest
 
 import pandas as pd
 import io
+import json
 from dotenv import load_dotenv
 from vector_store import get_vectorstore, load_vectorstore
 from utils import dataframe_to_documents
@@ -100,9 +101,9 @@ async def query_spreadsheet(query: QueryRequest):
                 # Parse JSON string back to list for categories
                 categories_json = doc.metadata.get('categories_json', '[]')
                 try:
-                    doc_categories = eval(
+                    doc_categories = json.loads(
                         categories_json) if categories_json else []
-                except:
+                except (json.JSONDecodeError, TypeError):
                     doc_categories = []
 
                 if any(cat in doc_categories for cat in filter_categories):
@@ -122,13 +123,14 @@ async def query_spreadsheet(query: QueryRequest):
 
             # Parse JSON metadata back to objects
             try:
-                categories = eval(metadata.get('categories_json', '[]'))
-            except:
+                categories = json.loads(metadata.get('categories_json', '[]'))
+            except (json.JSONDecodeError, TypeError):
                 categories = []
 
             try:
-                column_types = eval(metadata.get('column_types_json', '{}'))
-            except:
+                column_types = json.loads(
+                    metadata.get('column_types_json', '{}'))
+            except (json.JSONDecodeError, TypeError):
                 column_types = {}
 
             classification_explanation = metadata.get(
