@@ -29,21 +29,21 @@ export interface UploadResponse {
   preview: Record<string, string | number>[];
 }
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Upload CSV file
 export const uploadCsvFile = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await fetch(`${API_BASE_URL}/upload`, {
-    method: 'POST',
+    method: "POST",
     body: formData,
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || 'Upload failed');
+    throw new Error(errorData.detail || "Upload failed");
   }
 
   return response.json();
@@ -58,16 +58,16 @@ export const querySpreadsheet = async ({
   k?: number;
 }): Promise<QueryResponse> => {
   const response = await fetch(`${API_BASE_URL}/query`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ question, k }),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || 'Query failed');
+    throw new Error(errorData.detail || "Query failed");
   }
 
   return response.json();

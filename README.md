@@ -20,22 +20,24 @@ This project is a complete full-stack application built as part of a hiring assi
 ## 🧱 Tech Stack
 
 ### Backend
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| API Server | FastAPI | REST API with automatic OpenAPI docs |
-| AI Framework | LangChain | Embedding pipeline and document processing |
-| Embeddings | OpenAI API | `text-embedding-3-small` model |
-| Vector Store | ChromaDB | Local vector database for similarity search |
-| Data Processing | Pandas | CSV parsing and data analysis |
+
+| Component       | Technology | Purpose                                     |
+| --------------- | ---------- | ------------------------------------------- |
+| API Server      | FastAPI    | REST API with automatic OpenAPI docs        |
+| AI Framework    | LangChain  | Embedding pipeline and document processing  |
+| Embeddings      | OpenAI API | `text-embedding-3-small` model              |
+| Vector Store    | ChromaDB   | Local vector database for similarity search |
+| Data Processing | Pandas     | CSV parsing and data analysis               |
 
 ### Frontend
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | React 19 | Modern React with hooks |
-| Build Tool | Vite | Fast development and build |
-| Styling | TailwindCSS | Utility-first CSS framework |
+
+| Component        | Technology     | Purpose                              |
+| ---------------- | -------------- | ------------------------------------ |
+| Framework        | React 19       | Modern React with hooks              |
+| Build Tool       | Vite           | Fast development and build           |
+| Styling          | TailwindCSS    | Utility-first CSS framework          |
 | State Management | TanStack Query | Server state, caching, and mutations |
-| Type Safety | TypeScript | Static type checking |
+| Type Safety      | TypeScript     | Static type checking                 |
 
 ---
 
@@ -70,34 +72,41 @@ superjoin-hiring-assignment/
 ## 🛠️ Setup Instructions
 
 ### Prerequisites
+
 - Python 3.8+
 - Node.js 18+
 - OpenAI API key
 
 ### 1. Clone the repository
+
 ```bash
 git clone <repo-url>
 cd superjoin-hiring-assignment
 ```
 
 ### 2. Backend Setup
+
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
 Create `.env` file in the backend directory:
+
 ```env
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxx
 ```
 
 ### 3. Frontend Setup
+
 ```bash
 cd frontend
 npm install
 ```
 
 ### 4. Run the Application
+
+#### Option A: Running Locally
 
 **Backend** (Terminal 1):
 ```bash
@@ -116,17 +125,67 @@ npm run dev
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 
----
+#### Option B: Running with Docker
+
+**Prerequisites**: Docker and Docker Compose installed
+
+1. **Configure environment variables**:
+   ```bash
+   cd backend
+   echo "OPENAI_API_KEY=sk-your-actual-openai-api-key-here" > .env
+   cd ..
+   ```
+
+2. **Build and run containers**:
+   ```bash
+   # Build Docker images
+   docker-compose build
+
+   # Start services in detached mode
+   docker-compose up -d
+
+   # Check service status
+   docker-compose ps
+   ```
+
+3. **Access the containerized application**:
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+
+4. **Management commands**:
+   ```bash
+   # View logs
+   docker-compose logs -f
+
+   # View specific service logs
+   docker-compose logs -f backend
+   docker-compose logs -f frontend
+
+   # Stop services
+   docker-compose down
+
+   # Stop and remove volumes
+   docker-compose down -v
+   ```
+
+**Docker Architecture**:
+- **Backend**: FastAPI container with ChromaDB persistence
+- **Frontend**: Multi-stage build (Node.js → Nginx) with API proxy
+- **Networking**: Internal Docker network for service communication
+- **Volumes**: ChromaDB data persists across container restarts
 
 ## 📦 API Endpoints
 
 ### POST `/upload`
+
 - **Purpose**: Upload and process CSV files
 - **Input**: CSV file via multipart/form-data
 - **Process**: Parses CSV → generates embeddings → stores in ChromaDB
 - **Output**: File metadata, column info, and data preview
 
 ### POST `/query`
+
 - **Purpose**: Semantic search through uploaded data
 - **Input**: Natural language question and result count (k)
 - **Process**: Analyzes query → performs vector similarity search
@@ -137,6 +196,7 @@ npm run dev
 ## 🧠 How It Works (Architecture)
 
 ### Data Processing Pipeline
+
 1. **CSV Upload**: File is parsed using pandas with automatic column type detection
 2. **Business Context**: Rows are categorized into business concepts (revenue, costs, ratios, etc.)
 3. **Text Conversion**: Each row becomes a natural language description with metadata
@@ -144,12 +204,14 @@ npm run dev
 5. **Vector Storage**: ChromaDB stores embeddings with searchable metadata
 
 ### Query Processing
+
 1. **Query Analysis**: Categorizes query type and extracts business concepts
 2. **Semantic Search**: Vector similarity search in ChromaDB
 3. **Result Ranking**: Relevance scoring with business context
 4. **Response Generation**: Structured results with explanations
 
 ### Frontend Architecture
+
 - **Component Structure**: Clean separation of concerns with custom hooks
 - **State Management**: TanStack Query handles server state and caching
 - **User Experience**: Drag-and-drop, loading states, and error handling
@@ -160,6 +222,7 @@ npm run dev
 ## ✅ Completed Features
 
 - [x] **Backend Implementation**
+
   - [x] File upload with CSV parsing
   - [x] OpenAI embedding generation
   - [x] ChromaDB vector storage
@@ -169,6 +232,7 @@ npm run dev
   - [x] CORS configuration
 
 - [x] **Frontend Implementation**
+
   - [x] React 19 with TypeScript
   - [x] TailwindCSS styling
   - [x] TanStack Query integration
@@ -188,7 +252,9 @@ npm run dev
 ## 🧪 Example Usage
 
 ### Sample CSV Files
+
 The project includes test CSV files in `backend/data/`:
+
 - `pl_statement.csv` - Profit & Loss statement
 - `finance_ratios.csv` - Financial ratios
 - `cost_analysis.csv` - Cost breakdown
@@ -196,6 +262,7 @@ The project includes test CSV files in `backend/data/`:
 - `dashboard.csv` - Business dashboard data
 
 ### Example Queries
+
 - "What is the total revenue?"
 - "Show me all profitability metrics"
 - "Find operational costs"
@@ -207,6 +274,7 @@ The project includes test CSV files in `backend/data/`:
 ## 🚀 Development Commands
 
 ### Backend
+
 ```bash
 # Start development server
 uvicorn main:app --reload
@@ -216,6 +284,7 @@ open http://localhost:8000/docs
 ```
 
 ### Frontend
+
 ```bash
 # Development server
 npm run dev
@@ -235,17 +304,20 @@ npm run preview
 ## 🔧 Technical Details
 
 ### Vector Store Configuration
+
 - **Model**: OpenAI `text-embedding-3-small`
 - **Dimensions**: 1536
 - **Storage**: Local ChromaDB instance
 - **Metadata**: Business categories, column types, formulas
 
 ### Query Processing
+
 - **Analysis**: Query type classification with confidence scoring
 - **Search Strategy**: Semantic similarity with business context
 - **Ranking**: Relevance scoring with explanations
 
 ### Frontend Features
+
 - **Responsive Design**: Mobile-first approach with TailwindCSS
 - **Performance**: Optimized with React 19 and Vite
 - **Developer Experience**: TypeScript, ESLint, and hot reload
