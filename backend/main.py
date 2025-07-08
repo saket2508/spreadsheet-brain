@@ -11,7 +11,7 @@ import io
 import json
 from dotenv import load_dotenv
 from vector_store import get_vectorstore, load_vectorstore
-from utils import dataframe_to_documents, validate_csv_file, explain_relevance
+from utils import dataframe_to_documents, validate_csv_file, explain_relevance, sanitize_query_input
 from query_processor import QueryProcessor
 # from tagging import explain_classification  # Currently unused
 load_dotenv()  # Loads .env variables into os.environ
@@ -79,14 +79,17 @@ async def upload_csv(request: Request, file: UploadFile = File(...)):
 @limiter.limit("30/minute")  # 30 queries per minute per IP
 async def query_spreadsheet(request: Request, query: QueryRequest):
     try:
+        # Sanitize query input for security
+        sanitized_question = sanitize_query_input(query.question)
+        
         vectordb = load_vectorstore()  # reload persisted Chroma index
 
         # Process query using intelligent query understanding
-        query_analysis = query_processor.process_query(query.question)
+        query_analysis = query_processor.process_query(sanitized_question)
 
         # Get initial results with expanded search terms
         all_results = []
-        search_terms = [query.question] + \
+        search_terms = [sanitized_question] + \
             query_analysis.get('expanded_terms', [])
 
         # Search with original query and expanded terms

@@ -298,3 +298,111 @@ async def validate_csv_file(file: UploadFile):
             status_code=400,
             detail="Invalid CSV file format"
         )
+
+
+def sanitize_query_input(query_text: str, max_length: int = 500) -> str:
+    """Sanitize and validate user query input for security."""
+    
+    if not query_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Query text is required"
+        )
+    
+    # 1. Length validation
+    if len(query_text) > max_length:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Query too long. Maximum length is {max_length} characters"
+        )
+    
+    # 2. Remove potentially dangerous characters
+    # Allow alphanumeric, spaces, basic punctuation for business queries
+    import string
+    allowed_chars = string.ascii_letters + string.digits + string.punctuation + string.whitespace
+    
+    # Remove any non-printable characters
+    sanitized = ''.join(char for char in query_text if char in allowed_chars)
+    
+    # 3. Remove excessive whitespace
+    sanitized = ' '.join(sanitized.split())
+    
+    # 4. Enhanced suspicious pattern detection
+    suspicious_patterns = [
+        # Prompt injection patterns
+        'ignore previous instructions',
+        'ignore above',
+        'ignore all previous',
+        'system prompt',
+        'you are now',
+        'pretend to be',
+        'act as if',
+        'new instructions:',
+        'override previous',
+        
+        # Code execution patterns  
+        'execute',
+        'run command',
+        'exec(',
+        'eval(',
+        'system(',
+        '__import__',
+        'subprocess',
+        'os.system',
+        'shell',
+        'bash',
+        'cmd',
+        
+        # Script injection patterns
+        '<script',
+        '</script>',
+        'javascript:',
+        'data:text/html',
+        'vbscript:',
+        'onclick',
+        'onerror',
+        'onload',
+        
+        # SQL injection patterns
+        'union select',
+        'drop table',
+        'delete from',
+        'insert into',
+        'update set',
+        '--',
+        '/*',
+        '*/',
+        'or 1=1',
+        'and 1=1',
+        
+        # File system patterns
+        '../',
+        '..\\',
+        '/etc/passwd',
+        '/etc/shadow',
+        'c:\\windows',
+        
+        # Network patterns
+        'http://',
+        'https://',
+        'ftp://',
+        'file://',
+        'smtp://'
+    ]
+    
+    query_lower = sanitized.lower()
+    for pattern in suspicious_patterns:
+        if pattern in query_lower:
+            raise HTTPException(
+                status_code=400,
+                detail="Query contains potentially unsafe content"
+            )
+    
+    # 5. Ensure minimum length for meaningful queries
+    if len(sanitized.strip()) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Query must be at least 2 characters long"
+        )
+    
+    return sanitized.strip()
