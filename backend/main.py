@@ -1,7 +1,10 @@
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from models import QueryRequest
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 import pandas as pd
 import io
@@ -15,6 +18,11 @@ load_dotenv()  # Loads .env variables into os.environ
 
 
 app = FastAPI()
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Initialize query processor
 query_processor = QueryProcessor()
@@ -36,7 +44,8 @@ app.add_middleware(
 
 
 @app.post("/upload")
-async def upload_csv(file: UploadFile = File(...)):
+@limiter.limit("8/hour")  # 8 uploads per hour per IP
+async def upload_csv(request: Request, file: UploadFile = File(...)):
     try:
         if not file.filename.endswith(".csv"):
             raise HTTPException(
@@ -66,7 +75,8 @@ async def upload_csv(file: UploadFile = File(...)):
 
 
 @app.post("/query")
-async def query_spreadsheet(query: QueryRequest):
+@limiter.limit("30/minute")  # 30 queries per minute per IP
+async def query_spreadsheet(request: Request, query: QueryRequest):
     try:
         vectordb = load_vectorstore()  # reload persisted Chroma index
 
@@ -188,12 +198,14 @@ def _explain_relevance(query_analysis, doc_categories, doc_content):
 
 
 @app.get("/")
-async def root():
+@limiter.limit("10/minute")  # Basic rate limit for root endpoint
+async def root(request: Request):
     return {"message": "Semantic Search Engine for Spreadsheets - Ready"}
 
 
 @app.get("/health")
-async def health_check():
+@limiter.limit("20/minute")  # Health checks can be more frequent
+async def health_check(request: Request):
     return {
         "status": "healthy",
         "features": {
