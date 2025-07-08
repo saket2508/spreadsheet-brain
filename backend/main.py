@@ -19,11 +19,18 @@ app = FastAPI()
 # Initialize query processor
 query_processor = QueryProcessor()
 
-# TODO:Enable CORS if you're calling from frontend
+# CORS configuration for secure cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=[
+        "http://localhost:5173",      # Local development (Vite)
+        "http://localhost:3000",      # Local development (alternative)
+        # "https://*.vercel.app",       # Vercel preview deployments
+        # Add your production Vercel domain here when deployed
+        # "https://your-app-name.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
