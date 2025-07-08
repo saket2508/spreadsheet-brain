@@ -1,7 +1,16 @@
 import pandas as pd
 import re
+import json
 from typing import Dict, List, Any
+from fastapi import HTTPException, UploadFile
 from tagging import classify_metric, explain_classification, get_business_concept_hierarchy
+
+# Optional magic import for MIME type detection
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
 
 
 def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
@@ -169,17 +178,231 @@ def dataframe_to_documents(df: pd.DataFrame) -> List[Dict]:
         # Classify the row using enhanced tagging system
         row_categories = classify_metric(row_text, formula_info, column_types)
 
-        # Enhanced metadata - flatten complex structures for ChromaDB compatibility
+        # Enhanced metadata - use JSON for safe parsing
         metadata = {
             "row_index": i,
-            "column_types_json": str({col: column_types[col] for col in df.columns}),
-            "formula_info_json": str(formula_info) if formula_info else "",
-            "categories_json": str(row_categories),
-            "business_concepts_json": str(list(set(row_categories))),
+            "column_types_json": json.dumps({col: column_types[col] for col in df.columns}),
+            "formula_info_json": json.dumps(formula_info) if formula_info else "{}",
+            "categories_json": json.dumps(row_categories),
+            "business_concepts_json": json.dumps(list(set(row_categories))),
             "classification_explanation": explain_classification(row_categories, row_text),
-            "business_hierarchy_json": str(get_business_concept_hierarchy())
+            "business_hierarchy_json": json.dumps(get_business_concept_hierarchy())
         }
 
         docs.append(Document(page_content=row_text, metadata=metadata))
 
     return docs
+
+
+def explain_relevance(query_analysis, doc_categories, doc_content):
+    """Generate explanation for why this result is relevant to the query."""
+    extracted_concepts = query_analysis.get('extracted_concepts', [])
+    query_type = query_analysis.get('categorization', {}).get(
+        'primary_category', 'unknown')
+
+    # Find matching concepts
+    matching_concepts = [
+        concept for concept in extracted_concepts if concept in doc_categories]
+
+    if matching_concepts:
+        return f"Matches {', '.join(matching_concepts)} concepts from your {query_type} query"
+    elif doc_categories:
+        return f"Contains {', '.join(doc_categories[:2])} data relevant to your search"
+    else:
+        # Use doc_content for basic text similarity explanation
+        return f"Text similarity match with your query (content: {doc_content[:50]}...)"
+
+
+async def validate_csv_file(file: UploadFile):
+    """Comprehensive CSV file validation for security and performance."""
+    
+    # 1. File size validation (10MB limit)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+    file_size = 0
+    contents = b''
+    
+    # Read file in chunks to check size without loading everything
+    while chunk := await file.read(8192):  # 8KB chunks
+        file_size += len(chunk)
+        contents += chunk
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
+            )
+    
+    # Reset file pointer for later reading
+    await file.seek(0)
+    
+    # 2. Filename validation
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+    
+    # Check file extension
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=400, 
+            detail="Only CSV files are supported"
+        )
+    
+    # Sanitize filename (remove dangerous characters)
+    dangerous_chars = ['<', '>', ':', '"', '|', '?', '*', '\\', '/']
+    if any(char in file.filename for char in dangerous_chars):
+        raise HTTPException(
+            status_code=400,
+            detail="Filename contains invalid characters"
+        )
+    
+    # 3. MIME type validation (optional, if magic is available)
+    if MAGIC_AVAILABLE:
+        try:
+            mime_type = magic.from_buffer(contents[:1024], mime=True)
+            allowed_mime_types = ['text/csv', 'text/plain', 'application/csv']
+            if mime_type not in allowed_mime_types:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid file type. Expected CSV, got {mime_type}"
+                )
+        except Exception:
+            # If magic fails, continue without MIME validation
+            pass
+    
+    # 4. Content validation - ensure it's actually CSV-like
+    try:
+        # Try to read first few lines as CSV
+        content_str = contents.decode('utf-8')[:1000]  # First 1000 chars
+        lines = content_str.split('\n')[:5]  # First 5 lines
+        
+        # Basic CSV structure check
+        if len(lines) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="File must contain at least a header and one data row"
+            )
+        
+        # Check for reasonable number of columns (between 1-100)
+        first_line_columns = len(lines[0].split(','))
+        if first_line_columns < 1 or first_line_columns > 100:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid CSV structure: too few or too many columns"
+            )
+            
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="File encoding not supported. Please use UTF-8"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid CSV file format"
+        )
+
+
+def sanitize_query_input(query_text: str, max_length: int = 500) -> str:
+    """Sanitize and validate user query input for security."""
+    
+    if not query_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Query text is required"
+        )
+    
+    # 1. Length validation
+    if len(query_text) > max_length:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Query too long. Maximum length is {max_length} characters"
+        )
+    
+    # 2. Remove potentially dangerous characters
+    # Allow alphanumeric, spaces, basic punctuation for business queries
+    import string
+    allowed_chars = string.ascii_letters + string.digits + string.punctuation + string.whitespace
+    
+    # Remove any non-printable characters
+    sanitized = ''.join(char for char in query_text if char in allowed_chars)
+    
+    # 3. Remove excessive whitespace
+    sanitized = ' '.join(sanitized.split())
+    
+    # 4. Enhanced suspicious pattern detection
+    suspicious_patterns = [
+        # Prompt injection patterns
+        'ignore previous instructions',
+        'ignore above',
+        'ignore all previous',
+        'system prompt',
+        'you are now',
+        'pretend to be',
+        'act as if',
+        'new instructions:',
+        'override previous',
+        
+        # Code execution patterns  
+        'execute',
+        'run command',
+        'exec(',
+        'eval(',
+        'system(',
+        '__import__',
+        'subprocess',
+        'os.system',
+        'shell',
+        'bash',
+        'cmd',
+        
+        # Script injection patterns
+        '<script',
+        '</script>',
+        'javascript:',
+        'data:text/html',
+        'vbscript:',
+        'onclick',
+        'onerror',
+        'onload',
+        
+        # SQL injection patterns
+        'union select',
+        'drop table',
+        'delete from',
+        'insert into',
+        'update set',
+        '--',
+        '/*',
+        '*/',
+        'or 1=1',
+        'and 1=1',
+        
+        # File system patterns
+        '../',
+        '..\\',
+        '/etc/passwd',
+        '/etc/shadow',
+        'c:\\windows',
+        
+        # Network patterns
+        'http://',
+        'https://',
+        'ftp://',
+        'file://',
+        'smtp://'
+    ]
+    
+    query_lower = sanitized.lower()
+    for pattern in suspicious_patterns:
+        if pattern in query_lower:
+            raise HTTPException(
+                status_code=400,
+                detail="Query contains potentially unsafe content"
+            )
+    
+    # 5. Ensure minimum length for meaningful queries
+    if len(sanitized.strip()) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Query must be at least 2 characters long"
+        )
+    
+    return sanitized.strip()

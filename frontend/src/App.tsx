@@ -6,9 +6,14 @@ function App() {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const [query, setQuery] = useState("");
+  const [queryError, setQueryError] = useState("");
 
   const uploadMutation = useUploadCsv();
   const queryMutation = useQuerySpreadsheet();
+
+  // Query validation constants
+  const MAX_QUERY_LENGTH = 500;
+  const MIN_QUERY_LENGTH = 2;
 
   const handleFileSelect = (selectedFile: File | null) => {
     if (selectedFile && selectedFile.type === "text/csv") {
@@ -24,8 +29,65 @@ function App() {
     }
   };
 
+  // Query validation function
+  const validateQuery = (queryText: string): boolean => {
+    setQueryError("");
+
+    if (!queryText.trim()) {
+      setQueryError("Query cannot be empty");
+      return false;
+    }
+
+    if (queryText.length < MIN_QUERY_LENGTH) {
+      setQueryError(
+        `Query must be at least ${MIN_QUERY_LENGTH} characters long`
+      );
+      return false;
+    }
+
+    if (queryText.length > MAX_QUERY_LENGTH) {
+      setQueryError(`Query too long (max ${MAX_QUERY_LENGTH} characters)`);
+      return false;
+    }
+
+    // Basic suspicious pattern check (frontend UX)
+    const suspiciousPatterns = [
+      "javascript:",
+      "<script",
+      "eval(",
+      "system prompt",
+    ];
+
+    const queryLower = queryText.toLowerCase();
+    for (const pattern of suspiciousPatterns) {
+      if (queryLower.includes(pattern)) {
+        setQueryError("Query contains potentially unsafe content");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+
+    // Real-time validation for better UX
+    if (newQuery.length > 0) {
+      validateQuery(newQuery);
+    } else {
+      setQueryError("");
+    }
+  };
+
   const handleSearch = () => {
     if (!query.trim() || !uploadMutation.data) return;
+
+    if (!validateQuery(query)) {
+      return; // Don't submit if validation fails
+    }
+
     queryMutation.mutate({ question: query, k: 5 });
   };
 
@@ -265,27 +327,51 @@ function App() {
             </div>
 
             {/* Search Input */}
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask a natural language question about your spreadsheet..."
-                className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                onKeyDown={(e) =>
-                  e.key === "Enter" &&
-                  !queryMutation.isPending &&
-                  query.trim() &&
-                  handleSearch()
-                }
-              />
-              <button
-                onClick={handleSearch}
-                disabled={!query.trim() || queryMutation.isPending}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {queryMutation.isPending ? "Searching..." : "Search"}
-              </button>
+            <div className="space-y-2">
+              {/* Character Counter */}
+              <div className="flex justify-between items-center mt-1 text-xs">
+                {queryError && (
+                  <span className="text-red-600">{queryError}</span>
+                )}
+                <span
+                  className={`${
+                    query.length > MAX_QUERY_LENGTH * 0.9
+                      ? "text-orange-600"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {query.length}/{MAX_QUERY_LENGTH}
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={handleQueryChange}
+                  placeholder="Ask a natural language question about your spreadsheet..."
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                    queryError
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-300"
+                  }`}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    !queryMutation.isPending &&
+                    query.trim() &&
+                    !queryError &&
+                    handleSearch()
+                  }
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={
+                    !query.trim() || queryMutation.isPending || !!queryError
+                  }
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {queryMutation.isPending ? "Searching..." : "Search"}
+                </button>
+              </div>
             </div>
 
             {queryMutation.isError && (
