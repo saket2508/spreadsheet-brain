@@ -11,7 +11,7 @@ import io
 import json
 from dotenv import load_dotenv
 from vector_store import get_vectorstore, load_vectorstore
-from utils import dataframe_to_documents
+from utils import dataframe_to_documents, validate_csv_file, explain_relevance
 from query_processor import QueryProcessor
 # from tagging import explain_classification  # Currently unused
 load_dotenv()  # Loads .env variables into os.environ
@@ -47,10 +47,9 @@ app.add_middleware(
 @limiter.limit("8/hour")  # 8 uploads per hour per IP
 async def upload_csv(request: Request, file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith(".csv"):
-            raise HTTPException(
-                status_code=400, detail="Only CSV files are supported.")
-
+        # File validation
+        await validate_csv_file(file)
+        
         contents = await file.read()
         print(f"Uploading file: {file.filename}")
 
@@ -70,6 +69,8 @@ async def upload_csv(request: Request, file: UploadFile = File(...)):
             "columns": df.columns.tolist(),
             "preview": preview,
         }
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (like validation errors)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -160,7 +161,7 @@ async def query_spreadsheet(request: Request, query: QueryRequest):
                 "business_categories": categories,
                 "explanation": classification_explanation,
                 "column_types": column_types,
-                "relevance_reason": _explain_relevance(query_analysis, categories, doc.page_content)
+                "relevance_reason": explain_relevance(query_analysis, categories, doc.page_content)
             })
 
         return {
@@ -176,25 +177,6 @@ async def query_spreadsheet(request: Request, query: QueryRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-def _explain_relevance(query_analysis, doc_categories, doc_content):
-    """Generate explanation for why this result is relevant to the query."""
-    extracted_concepts = query_analysis.get('extracted_concepts', [])
-    query_type = query_analysis.get('categorization', {}).get(
-        'primary_category', 'unknown')
-
-    # Find matching concepts
-    matching_concepts = [
-        concept for concept in extracted_concepts if concept in doc_categories]
-
-    if matching_concepts:
-        return f"Matches {', '.join(matching_concepts)} concepts from your {query_type} query"
-    elif doc_categories:
-        return f"Contains {', '.join(doc_categories[:2])} data relevant to your search"
-    else:
-        # Use doc_content for basic text similarity explanation
-        return f"Text similarity match with your query (content: {doc_content[:50]}...)"
 
 
 @app.get("/")
