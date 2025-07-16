@@ -18,6 +18,12 @@ export interface QueryResponse {
     confidence: number;
     extracted_concepts: string[];
     search_strategy: string;
+    // Enhanced query analysis fields
+    financial_intent: string;
+    intent_confidence: number;
+    has_temporal_context: boolean;
+    temporal_types: string[];
+    reformulated_queries: string[];
   };
   total_results_found: number;
 }

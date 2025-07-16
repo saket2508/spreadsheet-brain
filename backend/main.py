@@ -85,14 +85,18 @@ async def query_spreadsheet(request: Request, query: QueryRequest):
         # Process query using intelligent query understanding
         query_analysis = query_processor.process_query(sanitized_question)
 
-        # Get initial results with expanded search terms
+        # Get initial results with enhanced search terms
         all_results = []
-        search_terms = [sanitized_question] + \
-            query_analysis.get('expanded_terms', [])
-
-        # Search with original query and expanded terms
-        # Limit to avoid too many searches
-        for search_term in search_terms[:3]:
+        
+        # Use reformulated queries for better search results
+        reformulated_queries = query_analysis.get('reformulated_queries', [sanitized_question])
+        expanded_terms = query_analysis.get('expanded_terms', [])
+        
+        # Combine reformulated queries with expanded terms
+        search_terms = reformulated_queries + expanded_terms
+        
+        # Search with enhanced query variations (limit to avoid too many searches)
+        for search_term in search_terms[:4]:
             results = vectordb.similarity_search_with_score(
                 search_term, k=query.k * 2)
             all_results.extend(results)
@@ -172,7 +176,13 @@ async def query_spreadsheet(request: Request, query: QueryRequest):
                 "query_type": query_analysis.get('categorization', {}).get('primary_category', 'unknown'),
                 "confidence": query_analysis.get('categorization', {}).get('confidence', 0),
                 "extracted_concepts": query_analysis.get('extracted_concepts', []),
-                "search_strategy": processing_result.get('search_strategy', 'semantic_similarity')
+                "search_strategy": processing_result.get('search_strategy', 'semantic_similarity'),
+                # Enhanced query analysis fields
+                "financial_intent": query_analysis.get('intent_analysis', {}).get('primary_intent', 'general_query'),
+                "intent_confidence": query_analysis.get('intent_analysis', {}).get('confidence', 0),
+                "has_temporal_context": query_analysis.get('temporal_context', {}).get('has_temporal_context', False),
+                "temporal_types": query_analysis.get('temporal_context', {}).get('temporal_types', []),
+                "reformulated_queries": query_analysis.get('reformulated_queries', [])
             },
             "total_results_found": len(response)
         }

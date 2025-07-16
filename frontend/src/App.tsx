@@ -113,11 +113,12 @@ function App() {
   };
 
   const exampleQueries = [
-    "What is the total revenue?",
-    "Show me all profitability metrics",
-    "Find operational costs",
-    "Where are efficiency ratios?",
-    "Show percentage calculations",
+    "How much did I spend on groceries last month?",
+    "Show me my budget vs actual spending",
+    "What are my spending trends over time?",
+    "Find all transactions to Amazon",
+    "Compare my expenses by category",
+    "Show me profitability metrics for Q1"
   ];
 
   return (
@@ -392,25 +393,52 @@ function App() {
               </h3>
             </div>
 
-            {/* Query Analysis */}
+            {/* Enhanced Query Analysis */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-blue-900 mb-2">
-                🔬 Query Analysis
+              <h4 className="font-medium text-blue-900 mb-3">
+                🔬 Enhanced Query Analysis
               </h4>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              
+              {/* Primary Analysis */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-4">
                 <div>
-                  <span className="text-blue-600 font-medium">Type:</span>
-                  <div className="text-blue-900">
-                    {queryMutation.data.query_analysis.query_type}
+                  <span className="text-blue-600 font-medium">Financial Intent:</span>
+                  <div className="text-blue-900 capitalize">
+                    {queryMutation.data.query_analysis.financial_intent.replace('_', ' ')}
                   </div>
                 </div>
                 <div>
-                  <span className="text-blue-600 font-medium">Confidence:</span>
+                  <span className="text-blue-600 font-medium">Intent Confidence:</span>
                   <div className="text-blue-900">
                     {(
-                      queryMutation.data.query_analysis.confidence * 100
+                      queryMutation.data.query_analysis.intent_confidence * 100
                     ).toFixed(1)}
                     %
+                  </div>
+                </div>
+                <div>
+                  <span className="text-blue-600 font-medium">Temporal Context:</span>
+                  <div className="text-blue-900">
+                    {queryMutation.data.query_analysis.has_temporal_context ? 
+                      `Yes (${queryMutation.data.query_analysis.temporal_types.join(', ')})` : 
+                      'No'
+                    }
+                  </div>
+                </div>
+                <div>
+                  <span className="text-blue-600 font-medium">Strategy:</span>
+                  <div className="text-blue-900">
+                    {queryMutation.data.query_analysis.search_strategy.replace('_', ' ')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Analysis */}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-600 font-medium">Query Type:</span>
+                  <div className="text-blue-900">
+                    {queryMutation.data.query_analysis.query_type}
                   </div>
                 </div>
                 <div>
@@ -422,9 +450,9 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-blue-600 font-medium">Strategy:</span>
+                  <span className="text-blue-600 font-medium">Query Variations:</span>
                   <div className="text-blue-900">
-                    {queryMutation.data.query_analysis.search_strategy}
+                    {queryMutation.data.query_analysis.reformulated_queries.length} variations used
                   </div>
                 </div>
               </div>

@@ -4,3 +4,6 @@ CLAUDE.md
 .DS_Store
 DEPLOYMENT.md
 railway.toml
+.venv
+venv/
+TECHNICAL_DOCUMENTATION.md
